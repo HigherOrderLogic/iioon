@@ -1,7 +1,7 @@
 hello = "Hello!"
 
 [nested]
-hello_nested = "Hello nested!"
+hello-nested = "Hello nested!"
 
 [nested.deeper_nested]
-hello_deeper_nested = "Hello deeper nested!"
+hello-deeper-nested = "Hello deeper nested!"
