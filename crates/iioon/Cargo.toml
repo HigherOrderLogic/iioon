@@ -1,0 +1,7 @@
+[package]
+name = "iioon"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+iioon-derive.workspace = true

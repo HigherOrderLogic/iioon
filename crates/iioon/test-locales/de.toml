@@ -1,0 +1,7 @@
+hello = "Hello German!"
+
+[nested]
+hello_nested = "Hello nested German!"
+
+[nested.deeper_nested]
+hello_deeper_nested = "Hello deeper nested German!"
