@@ -75,7 +75,7 @@ fn generate_enum_impl(
 
         match val {
             Value::String(s) => {
-                fn_return_ty.extend(quote! {String});
+                fn_return_ty.extend(quote! {Cow<'static, str>});
                 let mut fn_match_content = quote! {};
                 let mut has_args = false;
 
@@ -101,9 +101,9 @@ fn generate_enum_impl(
                         .as_str()
                         .context(format!("invalid string field {}", key))?;
                     let return_val = if has_args {
-                        quote! {format!(#locale_str)}
+                        quote! {Cow::Owned(format!(#locale_str))}
                     } else {
-                        quote! {#locale_str.into()}
+                        quote! {Cow::Borrowed(#locale_str)}
                     };
 
                     fn_match_content.extend(quote! {
@@ -247,7 +247,7 @@ fn generate_mod(
     }
 
     Ok(quote! {
-        use std::{fmt::Display, str::FromStr};
+        use std::{borrow::Cow, fmt::Display, str::FromStr};
 
         #[derive(Clone, Copy)]
         pub enum Language {
