@@ -77,6 +77,7 @@ fn generate_enum_impl(
             Value::String(s) => {
                 fn_return_ty.extend(quote! {String});
                 let mut fn_match_content = quote! {};
+                let mut has_args = false;
 
                 for arg in ARGUMENT_RE.captures_iter(s) {
                     let Some(arg_name) = arg.name("arg") else {
@@ -87,6 +88,7 @@ fn generate_enum_impl(
                     fn_args.extend(quote! {
                         #arg_ident: impl Display,
                     });
+                    has_args = true;
                 }
 
                 for lang in langs {
@@ -98,9 +100,14 @@ fn generate_enum_impl(
                         .context(format!("invalid string key {}", key))?
                         .as_str()
                         .context(format!("invalid string field {}", key))?;
+                    let return_val = if has_args {
+                        quote! {format!(#locale_str)}
+                    } else {
+                        quote! {#locale_str.into()}
+                    };
 
                     fn_match_content.extend(quote! {
-                        Language::#lang_ident => format!(#locale_str),
+                        Language::#lang_ident => #return_val,
                     });
                 }
 
