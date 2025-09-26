@@ -173,6 +173,7 @@ fn generate_mod(
     fallback: &Option<Lang>,
 ) -> Result<TokenStream, AnyError> {
     let mut langs_enum_members = quote! {};
+    let mut from_str_impl = quote! {};
     let mut files_content = HashMap::new();
     let mut first_lang = None;
 
@@ -182,8 +183,14 @@ fn generate_mod(
         }
 
         let mem_name = lang.enum_variant();
+        let mem_inner = lang.inner();
         langs_enum_members.extend(quote! {
             #mem_name,
+        });
+        from_str_impl.extend(quote! {
+            if s.eq_ignore_ascii_case(#mem_inner) {
+                return Ok(Language::#mem_name);
+            }
         });
 
         let file_content = read_to_string(file).context(format!(
@@ -213,9 +220,21 @@ fn generate_mod(
     }
 
     Ok(quote! {
+        use std::str::FromStr;
+
         #[derive(Clone, Copy)]
         pub enum Language {
             #langs_enum_members
+        }
+
+        impl FromStr for Language {
+            type Err = ();
+
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                #from_str_impl
+
+                Err(())
+            }
         }
 
         #langs_enum_impl
@@ -334,6 +353,11 @@ pub fn try_derive_i18n(input: &DeriveInput) -> Result<TokenStream, AnyError> {
                 #struct_impl
 
                 #fallback_fn
+
+                pub fn get_lang(&self, s: impl AsRef<str>) -> Option<__generated_i18n_mod::Language> {
+                    let s = s.as_ref();
+                    s.parse().ok()
+                }
             }
         }
     })

@@ -35,3 +35,11 @@ fn other_language() {
 fn fallback() {
     assert!(!Locale.fallback().hello().is_empty())
 }
+
+#[test]
+fn get_lang() {
+    assert!(Locale.get_lang("en").is_some());
+    assert!(Locale.get_lang("eN").is_some());
+    assert!(Locale.get_lang("no").is_none());
+    assert!(!Locale.get_lang("No").unwrap_or_default().hello().is_empty())
+}
