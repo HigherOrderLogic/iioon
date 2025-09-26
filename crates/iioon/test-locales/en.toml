@@ -1,7 +1,10 @@
 hello = "Hello!"
 
+[args]
+hello-args = "Hello {name}!"
+
 [nested]
 hello-nested = "Hello nested!"
 
-[nested.deeper_nested]
+[nested.deeper-nested]
 hello-deeper-nested = "Hello deeper nested!"

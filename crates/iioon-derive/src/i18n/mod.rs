@@ -6,6 +6,7 @@ use std::{
     ffi::OsStr,
     fs::{read_dir, read_to_string},
     path::PathBuf,
+    sync::LazyLock,
 };
 
 use anyhow::{Context, Error as AnyError};
@@ -13,10 +14,17 @@ use convert_case::{Case, Casing};
 use darling::FromDeriveInput;
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
+use regex::{Regex, RegexBuilder};
 use syn::{DeriveInput, Error as SynError, Generics, Ident};
 use toml::{Value, from_str, map::Map as TomlMap};
 
 use self::lang::Lang;
+
+static ARGUMENT_RE: LazyLock<Regex> = LazyLock::new(|| {
+    RegexBuilder::new(r#"\{(?<arg>[a-zA-z\d_]+)\}"#)
+        .build()
+        .unwrap()
+});
 
 #[derive(FromDeriveInput)]
 #[darling(attributes(i18n), supports(struct_unit))]
@@ -63,11 +71,23 @@ fn generate_enum_impl(
     for (key, val) in first_lang {
         let mut current_fn_impl = quote! {};
         let mut fn_return_ty = quote! {};
+        let mut fn_args = quote! {};
 
         match val {
-            Value::String(_) => {
+            Value::String(s) => {
                 fn_return_ty.extend(quote! {String});
                 let mut fn_match_content = quote! {};
+
+                for arg in ARGUMENT_RE.captures_iter(s) {
+                    let Some(arg_name) = arg.name("arg") else {
+                        continue;
+                    };
+                    let arg_ident = Ident::new(arg_name.as_str(), Span::call_site());
+
+                    fn_args.extend(quote! {
+                        #arg_ident: impl Display,
+                    });
+                }
 
                 for lang in langs {
                     let lang_ident = lang.enum_variant();
@@ -75,9 +95,9 @@ fn generate_enum_impl(
                         .get(lang)
                         .context(format!("invalid language {}", lang.inner()))?
                         .get(key)
-                        .context(format!("invalid key {}", key))?
+                        .context(format!("invalid string key {}", key))?
                         .as_str()
-                        .context(format!("invalid field {}", key))?;
+                        .context(format!("invalid string field {}", key))?;
 
                     fn_match_content.extend(quote! {
                         Language::#lang_ident => format!(#locale_str),
@@ -106,9 +126,9 @@ fn generate_enum_impl(
                         .get(lang)
                         .context(format!("invalid language {}", lang.inner()))?
                         .get(key)
-                        .context(format!("invalid key {}", key))?
+                        .context(format!("invalid table key {}", key))?
                         .as_table()
-                        .context(format!("invalid field {}", key))?;
+                        .context(format!("invalid table field {}", key))?;
                     new_map.insert(Lang::from(lang), locale_table.clone());
                 }
 
@@ -151,7 +171,7 @@ fn generate_enum_impl(
         let fn_name = Ident::new(&key.to_case(Case::Snake), Span::call_site());
 
         current_impl.extend(quote! {
-            pub fn #fn_name(self) -> #fn_return_ty {
+            pub fn #fn_name(self, #fn_args) -> #fn_return_ty {
                #current_fn_impl
             }
         })
@@ -220,7 +240,7 @@ fn generate_mod(
     }
 
     Ok(quote! {
-        use std::str::FromStr;
+        use std::{fmt::Display, str::FromStr};
 
         #[derive(Clone, Copy)]
         pub enum Language {

@@ -43,3 +43,8 @@ fn get_lang() {
     assert!(Locale.get_lang("no").is_none());
     assert!(!Locale.get_lang("No").unwrap_or_default().hello().is_empty())
 }
+
+#[test]
+fn args() {
+    assert_eq!(Locale.en().args().hello_args("John Doe"), "Hello John Doe!")
+}

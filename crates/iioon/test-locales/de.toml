@@ -1,7 +1,10 @@
 hello = "Hello German!"
 
+[args]
+hello-args = "Hello German {name}!"
+
 [nested]
 hello-nested = "Hello nested German!"
 
-[nested.deeper_nested]
+[nested.deeper-nested]
 hello-deeper-nested = "Hello deeper nested German!"
