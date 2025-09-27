@@ -1,7 +1,7 @@
 mod lang;
 
 use std::{
-    collections::HashMap,
+    collections::BTreeMap,
     env::var,
     ffi::OsStr,
     fs::{read_dir, read_to_string},
@@ -37,7 +37,7 @@ struct DeriveOpts {
 
 fn generate_enum_impl(
     langs: &Vec<Lang>,
-    langs_map: &HashMap<Lang, TomlMap<String, Value>>,
+    langs_map: &BTreeMap<Lang, TomlMap<String, Value>>,
     struct_name: Option<String>,
     is_enum: bool,
     new_struct: bool,
@@ -127,7 +127,7 @@ fn generate_enum_impl(
             }
             Value::Table(_) => {
                 new_struct_name.push(key.to_case(Case::Pascal));
-                let mut new_map = HashMap::new();
+                let mut new_map = BTreeMap::new();
                 for lang in langs {
                     let locale_table = langs_map
                         .get(lang)
@@ -201,7 +201,7 @@ fn generate_mod(
 ) -> Result<TokenStream, AnyError> {
     let mut langs_enum_members = quote! {};
     let mut from_str_impl = quote! {};
-    let mut files_content = HashMap::new();
+    let mut files_content = BTreeMap::new();
     let mut first_lang = None;
 
     for (file, lang) in langs {

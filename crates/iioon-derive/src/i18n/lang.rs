@@ -2,7 +2,7 @@ use convert_case::{Case, Casing};
 use proc_macro2::Span;
 use syn::Ident;
 
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Lang(String);
 
 impl From<String> for Lang {
