@@ -222,11 +222,11 @@ fn generate_mod(
 
         let file_content = read_to_string(file).context(format!(
             "failed to read translation file {}",
-            file.to_str().unwrap_or_default()
+            file.display()
         ))?;
         let file_content: TomlMap<String, Value> = from_str(&file_content).context(format!(
             "failed to deserialize translation file {}",
-            file.to_str().unwrap_or_default()
+            file.display()
         ))?;
         files_content.insert(Lang::from(lang), file_content);
     }
@@ -293,7 +293,7 @@ pub fn try_derive_i18n(input: &DeriveInput) -> Result<TokenStream, AnyError> {
             input,
             format!(
                 "folder {} does not exist",
-                translation_folder.to_str().unwrap_or_default()
+                translation_folder.display()
             ),
         )
         .into());
@@ -329,7 +329,7 @@ pub fn try_derive_i18n(input: &DeriveInput) -> Result<TokenStream, AnyError> {
             input,
             format!(
                 "no translation file found at {}",
-                translation_folder.to_str().unwrap_or_default()
+                translation_folder.display()
             ),
         )
         .into());
