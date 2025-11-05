@@ -48,7 +48,10 @@ fn generate_enum_impl(
         Vec::new()
     };
     let struct_ident = Ident::new(
-        struct_name.unwrap_or("Language".to_string()).as_ref(),
+        struct_name
+            .map(|s| format!("_{}", s))
+            .unwrap_or("Language".to_string())
+            .as_ref(),
         Span::call_site(),
     );
 
@@ -147,7 +150,10 @@ fn generate_enum_impl(
                     false,
                     true,
                 )?;
-                let new_struct_ident = Ident::new(&new_struct_name_str, Span::call_site());
+                let new_struct_ident = Ident::new(
+                    format!("_{}", &new_struct_name_str).as_ref(),
+                    Span::call_site(),
+                );
 
                 fn_return_ty.extend(quote! {#new_struct_ident});
                 extra_impl.extend(new_struct_impl);
@@ -291,10 +297,7 @@ pub fn try_derive_i18n(input: &DeriveInput) -> Result<TokenStream, AnyError> {
     if !translation_folder.exists() {
         return Err(SynError::new_spanned(
             input,
-            format!(
-                "folder {} does not exist",
-                translation_folder.display()
-            ),
+            format!("folder {} does not exist", translation_folder.display()),
         )
         .into());
     }
