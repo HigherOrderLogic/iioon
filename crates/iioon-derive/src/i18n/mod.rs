@@ -237,9 +237,7 @@ fn generate_mod(
             #mem_name,
         });
         from_str_impl.extend(quote! {
-            if s.eq_ignore_ascii_case(#mem_inner) {
-                return Ok(Language::#mem_name);
-            }
+            #mem_inner => Ok(Language::#mem_name),
         });
 
         let file_content = read_to_string(file).context(format!(
@@ -268,6 +266,10 @@ fn generate_mod(
         });
     }
 
+    from_str_impl.extend(quote! {
+        _ => Err(()),
+    });
+
     Ok(quote! {
         use std::{borrow::Cow, fmt::Display, str::FromStr};
 
@@ -280,9 +282,9 @@ fn generate_mod(
             type Err = ();
 
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                #from_str_impl
-
-                Err(())
+                match s.to_ascii_lowercase().as_ref() {
+                    #from_str_impl
+                }
             }
         }
 
