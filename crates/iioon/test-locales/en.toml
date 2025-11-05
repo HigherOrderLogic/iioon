@@ -1,4 +1,5 @@
 hello = "Hello!"
+hello-fallback = "Hello not German!"
 
 [args]
 hello-args = "Hello {name}!"

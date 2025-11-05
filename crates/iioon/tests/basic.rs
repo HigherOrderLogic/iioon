@@ -32,7 +32,7 @@ fn other_language() {
 }
 
 #[test]
-fn fallback() {
+fn fallback_lang() {
     assert!(!Locale.fallback().hello().is_empty())
 }
 
@@ -47,4 +47,9 @@ fn get_lang() {
 #[test]
 fn args() {
     assert_eq!(Locale.en().args().hello_args("John Doe"), "Hello John Doe!")
+}
+
+#[test]
+fn fallback() {
+    assert_eq!(Locale.en().hello_fallback(), Locale.de().hello_fallback())
 }

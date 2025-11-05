@@ -37,6 +37,7 @@ struct DeriveOpts {
 
 fn generate_enum_impl(
     langs: &Vec<Lang>,
+    fallback: &Option<Lang>,
     langs_map: &BTreeMap<Lang, TomlMap<String, Value>>,
     struct_name: Option<String>,
     is_enum: bool,
@@ -66,12 +67,15 @@ fn generate_enum_impl(
         });
     }
 
-    let first_lang = langs_map
-        .values()
-        .next()
-        .context("there should be at least 1 language")?;
+    let has_fallback = fallback.is_some();
+    let ref_lang = if let Some(l) = fallback {
+        langs_map.get(l)
+    } else {
+        langs_map.values().next()
+    }
+    .context("there should be at least 1 language")?;
 
-    for (key, val) in first_lang {
+    for (key, val) in ref_lang {
         let mut current_fn_impl = quote! {};
         let mut fn_return_ty = quote! {};
         let mut fn_args = quote! {};
@@ -96,13 +100,19 @@ fn generate_enum_impl(
 
                 for lang in langs {
                     let lang_ident = lang.enum_variant();
-                    let locale_str = langs_map
+                    let locale_value = langs_map
                         .get(lang)
                         .context(format!("invalid language {}", lang.inner()))?
-                        .get(key)
-                        .context(format!("invalid string key {}", key))?
-                        .as_str()
-                        .context(format!("invalid string field {}", key))?;
+                        .get(key);
+
+                    let locale_str = if has_fallback {
+                        locale_value.unwrap_or(val)
+                    } else {
+                        locale_value.context(format!("invalid string key {}", key))?
+                    }
+                    .as_str()
+                    .context(format!("invalid string field {}", key))?;
+
                     let return_val = if has_args {
                         quote! {Cow::Owned(format!(#locale_str))}
                     } else {
@@ -132,19 +142,25 @@ fn generate_enum_impl(
                 new_struct_name.push(key.to_case(Case::Pascal));
                 let mut new_map = BTreeMap::new();
                 for lang in langs {
-                    let locale_table = langs_map
+                    let locale_value = langs_map
                         .get(lang)
                         .context(format!("invalid language {}", lang.inner()))?
-                        .get(key)
-                        .context(format!("invalid table key {}", key))?
-                        .as_table()
-                        .context(format!("invalid table field {}", key))?;
+                        .get(key);
+
+                    let locale_table = if has_fallback {
+                        locale_value.unwrap_or(val)
+                    } else {
+                        locale_value.context(format!("invalid table key {}", key))?
+                    }
+                    .as_table()
+                    .context(format!("invalid table field {}", key))?;
                     new_map.insert(Lang::from(lang), locale_table.clone());
                 }
 
                 let new_struct_name_str = new_struct_name.join("__");
                 let new_struct_impl = generate_enum_impl(
                     langs,
+                    fallback,
                     &new_map,
                     Some(new_struct_name_str.clone()),
                     false,
@@ -238,7 +254,7 @@ fn generate_mod(
     }
 
     let langs: Vec<Lang> = files_content.keys().map(Lang::from).collect();
-    let langs_enum_impl = generate_enum_impl(&langs, &files_content, None, true, false)?;
+    let langs_enum_impl = generate_enum_impl(&langs, fallback, &files_content, None, true, false)?;
 
     let mut fallback_impl = quote! {};
     if let Some(fb) = fallback {
