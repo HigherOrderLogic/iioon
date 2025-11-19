@@ -1,7 +1,7 @@
 use iioon::I18N;
 
 #[derive(I18N)]
-#[i18n(folder = "test-locales/", fallback = "en")]
+#[i18n(folder = "tests/locales/", fallback = "en")]
 pub struct Locale;
 
 #[test]
