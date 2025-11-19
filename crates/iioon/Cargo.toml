@@ -1,6 +1,8 @@
 [package]
 name = "iioon"
 version.workspace = true
+description.workspace = true
+license.workspace = true
 edition.workspace = true
 
 [dependencies]

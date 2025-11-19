@@ -5,6 +5,8 @@ resolver = "2"
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
+description = "A compiled-time i18n helper"
+license = "MPL-2.0"
 
 [workspace.dependencies]
 iioon-derive.path = "./crates/iioon-derive"
